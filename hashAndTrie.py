@@ -1,7 +1,15 @@
-import json
 
+
+hashMap = {}
 class HashMap:
-    hashMap = {}
+    def insert(key, val):
+        hashMap[key] = val
+
+    def findKey(key):
+        if key in hashMap:
+            return True
+        else:
+            return False
 
 class TrieNode:
     def __init__(self):
