@@ -1,5 +1,3 @@
-
-
 hashMap = {}
 class HashMap:
     def insert(key, val):
@@ -27,24 +25,44 @@ class Trie:
     def __init__(self):
         self.root = TrieNode()
 
+    # Standardize the title string.
+    def preprocess_title(self, title):
+        return title.strip().lower()
+
     def insert(self, title, title_info):
+        title = self.preprocess_title(title)
         node = self.root
 
         # traverse each character in the title
         for char in title:
-            # check if the character exists in the current node's children
-            if char in node.children:
-                node = node.children[char]
-            # if not exits, create a new child node for this character
-            else:
+            # check if the character not exists in the current node's children
+            if char not in node.children:
+                # create a new child node for this character
                 node.children[char] = TrieNode()
-
+            node = node.children[char]
+            
+        if title_info not in node.node_info:
+            # add the information of the title
+            node.node_info.append(title_info)
         # mark the current node as the end of the word to indicate this path has a complete word
         node.end_word()
-        # add the information of the title
-        node.node_info.append(title_info)
 
+    # Search for a title in the Trie.
     def search(self, title):
+        title = self.preprocess_title(title)
+        exactly_search = self.exactlysearch(title)
+        # Try if it is exactly match
+        if exactly_search:
+            return exactly_search
+        # if not, try the prefix way
+        prefix_search = self.startswith(title)
+        if prefix_search:
+            return prefix_search
+        # if not find, return false
+        return False
+
+    def exactlysearch(self, title):
+        title = self.preprocess_title(title)
         node = self.root
 
         # traverse each character in the title string
@@ -64,6 +82,7 @@ class Trie:
 
 
     def startswith(self, prefix):
+        prefix = self.preprocess_title(prefix)
         node = self.root
         for char in prefix:
             if char in node.children:
