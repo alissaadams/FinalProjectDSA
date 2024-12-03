@@ -54,13 +54,13 @@ class Trie:
 
             # if the character not exits in the node of children indicates the title not exits
             else:
-                return []
+                return False
 
         # check if the current node is the last character of a completed word
         if node.word_completed:
             return node.node_info
         else:
-            return []
+            return False
 
 
     def startswith(self, prefix):

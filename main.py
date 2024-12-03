@@ -71,7 +71,7 @@ def compareAccuracy(userInput):
             hashAccuracyCount += 0
 
         trieKeyFound = returnedTrie.search(userInput[i].lower())
-        if trieKeyFound != []:
+        if trieKeyFound != False:
             trieAccuracyCount += 1
         else:
             trieAccuracyCount += 0
