@@ -28,77 +28,94 @@ def loadDataset():
                     HashMap.insert(title, features)
     return trie, data
 
-
 def compareTime(userInput):
-    print(f"Searching for {userInput}")
+    totalTrieTime = 0
+    totalHashTime = 0
 
-    # values are used in the accuracy function, they count how many times a search is successful
+    for i in range(len(userInput)):
+        print(f"Searching for {userInput[i]}")
+
+        # timing for hash
+        startTime = time.perf_counter()
+        keyFound = HashMap.findKey(userInput[i])
+        if keyFound == True:
+            timeforHash = time.perf_counter() - startTime
+            print(f"Time taken for hashmap search: {1000000 * timeforHash:.10f} microseconds")
+        else:
+            timeforHash = 0
+            print(f"{userInput[i]} not found through hashmap")
+        totalHashTime += timeforHash
+
+        # timing for trie
+        start = time.perf_counter()
+        returnedTrie.search(userInput[i].lower())
+        timeforTrie = time.perf_counter() - start
+        print(f"Time taken for trie search: {1000000 * timeforTrie:.10f} microseconds\n")
+        totalTrieTime += timeforTrie
+
+    # Get averages
+    averageTrieTime = totalTrieTime / len(userInput)
+    averageHashTime = totalHashTime / len(userInput)
+
+    return averageTrieTime, averageHashTime
+
+def compareAccuracy(userInput):
     hashAccuracyCount = 0
     trieAccuracyCount = 0
-    timeHash = 0 # can't run without having this defined first
 
-    # timing for hash
-    startTime = time.perf_counter()
-    keyFound = HashMap.findKey(userInput)
-    if keyFound == True:
-        timeHash = time.perf_counter() - startTime
-        hashAccuracyCount += 1
-        print(f"Time taken for hashmap search: {1000000 * timeHash:.10f} microseconds")
-    else:
-        print("Title not found through hashmap")
+    for i in range(len(userInput)):
+        keyFound = HashMap.findKey(userInput[i])
+        if keyFound == True:
+            hashAccuracyCount += 1
+        else:
+            hashAccuracyCount += 0
 
-    # timing for trie
-    start = time.perf_counter()
-    returnedTrie.search(userInput.lower())
-    timeTrie = time.perf_counter() - start
-    print(f"Time taken for trie search: {1000000 * timeTrie:.10f} microseconds\n")
-    trieAccuracyCount += 1
+        trieKeyFound = returnedTrie.search(userInput[i].lower())
+        if trieKeyFound != []:
+            trieAccuracyCount += 1
+        else:
+            trieAccuracyCount += 0
 
-    return trieAccuracyCount, hashAccuracyCount, timeTrie, timeHash
+    accuracyHash = (hashAccuracyCount / len(userInput)) * 100
+    accuracyTrie = (trieAccuracyCount / len(userInput)) * 100
 
-def compareAccuracy():
-    numCorrectHash = 0
-    numCorrectTrie = 0
-
-    # Fixed list to mix specific and shortened titles
-    listForAccuracy = ["ROVSUN Ice Maker Machine Countertop", "HANSGO Egg Holder for Refrigerator",
-                       "154567702 Dishwasher Lower Wash", "Whirlpool W10918546 Igniter",
-                       "1841N030 - Brown Aftermarket Replacement Stove Range Oven Drip Bowl Pan"]
+    return accuracyHash, accuracyTrie
 
 
-    for i in range(5):
-        trieCount, hashCount, _, _ = compareTime(listForAccuracy[i])
-        numCorrectTrie += trieCount
-        numCorrectHash += hashCount
+def addTitle(titleInput, listOfTitles):
+    listOfTitles.append(titleInput)
+    return listOfTitles
 
-        accuracyHash = (numCorrectHash / 5) * 100
-        accuracyTrie = (numCorrectTrie / 5) * 100
-
-    print(f"The accuracy in finding the searched keys for hashmap is {accuracyHash}%, and for trie is {accuracyTrie}%")
-
-
-def multipleIterations(dataLoaded): # function calls the compare time function for random values in the data set
-    avgHashTime = 0
-    avgTrieTime = 0
-
-    for i in range(5):
-        randomNum = random.randint(0, 99000)
-        input = dataLoaded[randomNum]['title']
-        _, _, trieTime, hashTime = compareTime(input) # using underscores because first two values are not needed in this function
-        avgHashTime += hashTime
-        avgTrieTime += trieTime
-
-    avgHashTime = avgHashTime / 5
-    avgTrieTime = avgTrieTime / 5
-
-    print(f"The average time for finding the key with the hash structure is {1000000 * avgHashTime:.10f} microseconds, and with"
-          f" the trie structure, it is {1000000 * avgTrieTime:.10f} microseconds")
 
 if __name__ == "__main__":
-    print("Selecting random titles from data to search for, please wait.")
-    returnedTrie, dataLoaded = loadDataset()  # outside the function so it only runs loadDataset one time
-    multipleIterations(dataLoaded)
+    print("Please enter the title(s) of appliances you want to search for: ")
+    print("Type 'done' when you are finished inserting titles.")
+    userInput = input("Title: ")
+    listOfTitles = []
 
-    print("Now we'll determine accuracy for both hashmap and trie based on full "
-          "titles from the data set and shortened versions: \n")
-    compareAccuracy()
+    while (userInput != 'done'):
+        listOfTitles = addTitle(userInput, listOfTitles)
+        userInput = input("Title: ")
+
+    returnedTrie, dataLoaded = loadDataset()  # outside the function so it only runs loadDataset one time
+
+    avgTrieTime, avgHashTime = compareTime(listOfTitles)
+    accuracyOfHash, accuracyOfTrie = compareAccuracy(listOfTitles)
+
+    if avgHashTime == 0:
+        print("There is no average time for the hash function because it "
+              "could not find any of the inputted titles.\nThe average time for finding the titles in the tree"
+              f" is {1000000 * avgTrieTime:.2f} microseconds. ")
+    else:
+        print(
+            f"The average time for finding the key with the hash structure is {1000000 * avgHashTime:.2f} microseconds, and with"
+            f" the trie structure, it is {1000000 * avgTrieTime:.2f} microseconds")
+
+    print(f"The accuracy in finding the searched keys for hashmap is {accuracyOfHash:.2f}%, and for trie is {accuracyOfTrie:.2f}%")
+
+    ## list below is for running and testing
+    #
+    #                   ["ROVSUN Ice Maker Machine Countertop", "HANSGO Egg Holder for Refrigerator",
+    #                    "154567702 Dishwasher Lower Wash", "Whirlpool W10918546 Igniter",
+    #                    "1841N030 - Brown Aftermarket Replacement Stove Range Oven Drip Bowl Pan"]
+
