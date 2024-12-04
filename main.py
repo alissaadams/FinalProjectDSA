@@ -3,49 +3,49 @@ import time
 from hashAndTrie import Trie
 from hashAndTrie import HashMap
 
+
 def loadDataset():
     # initialize the Trie
     trie = Trie()
 
-    #initialize the Hashmap
+    # initialize the Hashmap
     hashmap = HashMap()
 
     dataFile = 'data/meta_Appliances.jsonl'
 
-    data = [] # info from data file gets stored in this array
+    data = []  # info from data file gets stored in this array
 
-    with open(dataFile, 'r') as file: # help with loading items from https://amazon-reviews-2023.github.io/
+    with open(dataFile, 'r') as file:  # help with loading items from https://amazon-reviews-2023.github.io/
         for line in file:
-                item = json.loads(line) # get json object on each line
-                title = item.get('title', None) # get title and features from data file
-                features = item.get('details', None)
+            item = json.loads(line)  # get json object on each line
+            title = item.get('title', None)  # get title and features from data file
+            features = item.get('details', None)
 
-                if title:
-                    title_for_trie = trie.preprocess_title(title)
-                    title_for_hash = hashmap.preprocess_title(title)
-                    # if title exists, append to the data array
-                    info_item = {'title': title,
-                                 'features': features if features else "No features information"
-                                 }
-                    data.append(info_item)
-                    trie.insert(title_for_trie, info_item)
-                    hashmap.insert(title_for_hash, features)
+            if title:
+                titleForTrie = trie.preprocess_title(title)
+                titleForHash = hashmap.preprocess_title(title)
+                # if title exists, append to the data array
+                infoItem = {'title': title,
+                            'features': features if features else "No features information"
+                            }
+                data.append(infoItem)
+                trie.insert(titleForTrie, infoItem)
+                hashmap.insert(titleForHash, features)
     return trie, hashmap, data
 
-def compareTime(userInput):
+
+def compareTime(userInputList):
     totalTrieTime = 0
     totalHashTime = 0
 
-    if not userInput:
-        print("No input for comparison.")
-        return 0, 0
-
-    for title in userInput:
+    for title in userInputList:
         print(f"Searching for {title}")
 
         # timing for hash
         startTime = time.perf_counter()
         keyFound = returnedHashMap.findKey(title)
+
+        # Calculates time for hash only if found in hashmap
         if keyFound:
             timeforHash = time.perf_counter() - startTime
             print(f"Time taken for hashmap search: {1000000 * timeforHash:.2f} microseconds")
@@ -59,42 +59,54 @@ def compareTime(userInput):
         start = time.perf_counter()
         trieKeyFound = returnedTrie.search(processedTitle)
 
-        # Calculates time only if key is found
+        # Calculates time for trie only if key is found in trie
         if trieKeyFound:
             timeforTrie = time.perf_counter() - start
-            print(f"Time taken for trie search: {1000000 * timeforTrie:.2f} microseconds\n")
+
+            # Since the trie searches based on letters not exact matches, ask user if title correct
+            print(f"Found: '{trieKeyFound[0]['title']}', is this your title?")
+            isTitle = input("Input Y or N: ").lower()
+            if (isTitle == 'y'):
+                print(f"Time taken for trie search: {1000000 * timeforTrie:.2f} microseconds\n")
+            elif (isTitle == 'n'):
+                timeforTrie = 0  # time is not calculated if title incorrect
+                print(f"'{title}' not found through trie\n")
         else:
-            timeforTrie = 0
-            print(f"{title} not found through trie\n")
+            timeforTrie = 0  # time is not calculated if title not found
+            print(f"'{title}' not found through trie\n")
         totalTrieTime += timeforTrie
 
     # Get averages
-    averageTrieTime = totalTrieTime / len(userInput)
-    averageHashTime = totalHashTime / len(userInput)
+    averageTrieTime = totalTrieTime / len(userInputList)
+    averageHashTime = totalHashTime / len(userInputList)
 
-    return averageTrieTime, averageHashTime
+    return averageTrieTime, averageHashTime, isTitle
 
-def compareAccuracy(userInput):
+
+def compareAccuracy(userInputList, isTitleCorrect):
     hashAccuracyCount = 0
     trieAccuracyCount = 0
+    lengthUserInputList = len(userInputList)
 
-    for i in range(len(userInput)):
-        keyFound = returnedHashMap.findKey(userInput[i])
-        if keyFound == True:
+    # Checks trie and hashmap if keys exist
+    for i in range(lengthUserInputList):
+        # Increments counter for accuracy if key in hashmap
+        hashKeyFound = returnedHashMap.findKey(userInputList[i])
+        if hashKeyFound == True:
             hashAccuracyCount += 1
         else:
             hashAccuracyCount += 0
 
-        trieKeyFound = returnedTrie.search(userInput[i])
-        # print(f"Searching for {userInput[i]} in Trie. Found: {trieKeyFound}")
-
-        if trieKeyFound:
+        # Increments counter for accuracy if key in trie AND if the title is what the users looking for
+        trieKeyFound = returnedTrie.search(userInputList[i])
+        if trieKeyFound and isTitleCorrect == 'y':
             trieAccuracyCount += 1
         else:
             trieAccuracyCount += 0
 
-    accuracyHash = (hashAccuracyCount / len(userInput)) * 100
-    accuracyTrie = (trieAccuracyCount / len(userInput)) * 100
+    # Calculates the accuracy based on the number of titles and how many are correct for each
+    accuracyHash = (hashAccuracyCount / len(userInputList)) * 100
+    accuracyTrie = (trieAccuracyCount / len(userInputList)) * 100
 
     return accuracyHash, accuracyTrie
 
@@ -104,26 +116,39 @@ def addTitle(titleInput, listOfTitles):
     return listOfTitles
 
 
-if __name__ == "__main__":
-    # Gets input from user to store in list of titles
-    print("Welcome to Appliance Searcher 3000!")
-    print("Please enter the title(s) of appliances you want to search for: ")
-    print("Type 'done' when you are finished inserting titles.")
-    userInput = input("Title: ")
+def main():
+    # Variables used in other functions
+    global returnedTrie
+    global returnedHashMap
+    global dataLoaded
     listOfTitles = []
 
+    print("Welcome to Appliance Searcher 3000!")
+
+    # Gets input from user to store in list of titles
+    print("Please enter the title(s) of appliances you want to search for: ")
+    print("Type 'done' when you are finished inserting titles.")
+
+    userInput = input("Title: ")
+
+    # Gets however many titles user wants
     while (userInput != 'done'):
-        listOfTitles = addTitle(userInput, listOfTitles)
+        # makes sure input isn't empty
+        if (userInput != ''):
+            listOfTitles = addTitle(userInput, listOfTitles)
+        else:
+            print("No input, please try again.")
         userInput = input("Title: ")
 
-    print("Loading...") # prints after titles have been inserted
+    print("Loading...")
 
     # Get values and call return functions
-    returnedTrie, returnedHashMap, dataLoaded = loadDataset() # outside the function so it only runs loadDataset one time
-    avgTrieTime, avgHashTime = compareTime(listOfTitles)
-    accuracyOfHash, accuracyOfTrie = compareAccuracy(listOfTitles)
+    returnedTrie, returnedHashMap, dataLoaded = loadDataset()
+    avgTrieTime, avgHashTime, isTitleCorrect = compareTime(listOfTitles)
+    accuracyOfHash, accuracyOfTrie = compareAccuracy(listOfTitles, isTitleCorrect)
 
     print("")
+
     # Checks if there is an average hash time to determine what to display
     if avgHashTime == 0:
         print("There is no average time for the Hashmap function because it "
@@ -137,16 +162,25 @@ if __name__ == "__main__":
         print(f"There is no average time for the Trie function because it "
               "could not find any of the inputted titles.")
     else:
-        print(f"The average time for finding the key with the trie structure is {1000000 * avgTrieTime:.2f} microseconds")
+        print(
+            f"The average time for finding the key with the trie structure is {1000000 * avgTrieTime:.2f} microseconds")
 
     # If accuracy of hash or accuracy of trie exist, display the percentage. If not, title not found
     if (accuracyOfHash or accuracyOfTrie):
-        print(f"\nThe accuracy in finding the searched keys for hashmap is {accuracyOfHash:.2f}%, and for trie is {accuracyOfTrie:.2f}%")
+        print(
+            f"\nThe accuracy in finding the searched keys for hashmap is {accuracyOfHash:.2f}%, and for trie is {accuracyOfTrie:.2f}%")
     else:
-        print("No accuracy can be calculated because no titles were found.")
+        print("\nNo accuracy can be calculated because no titles were found.")
+
+
+if __name__ == "__main__":
+    main()
 
     ## list below is for running and testing
-    #
-    #                   ["ROVSUN Ice Maker Machine Countertop, Make 44lbs Ice in 24 Hours, Compact & Portable Ice Maker with Ice Basket for Home, Office, Kitchen, Bar (Silver)", "HANSGO Egg Holder for Refrigerator",
-    #                    "154567702 Dishwasher Lower Wash", "Whirlpool W10918546 Igniter",
-    #                    "1841N030 - Brown Aftermarket Replacement Stove Range Oven Drip Bowl Pan"]
+
+    # ROVSUN Ice Maker Machine Countertop, Make 44lbs Ice in 24 Hours, Compact & Portable Ice Maker with Ice Basket for Home, Office, Kitchen, Bar (Silver)
+    # HANSGO Egg Holder for Refrigerator
+    # 154567702 Dishwasher Lower Wash
+    # Whirlpool W10918546 Igniter
+    # 1841N030 - Brown Aftermarket Replacement Stove Range Oven Drip Bowl Pan
+
