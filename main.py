@@ -9,6 +9,9 @@ def loadDataset():
     # initialize the Trie
     trie = Trie()
 
+    #initialize the Hashmap
+    hashmap = HashMap()
+
     dataFile = 'data/meta_Appliances.jsonl'
 
     data = [] # info from data file gets stored in this array
@@ -21,14 +24,15 @@ def loadDataset():
 
                 if title:
                     title_for_trie = trie.preprocess_title(title)
+                    title_for_hash = hashmap.preprocess_title(title)
                     # if title exists, append to the data array
                     info_item = {'title': title,
                                  'features': features if features else "No features information"
                                  }
                     data.append(info_item)
                     trie.insert(title_for_trie, info_item)
-                    HashMap.insert(title, features)
-    return trie, data
+                    hashmap.insert(title_for_hash, features)
+    return trie, hashmap, data
 
 def compareTime(userInput):
     totalTrieTime = 0
@@ -43,7 +47,7 @@ def compareTime(userInput):
 
         # timing for hash
         startTime = time.perf_counter()
-        keyFound = HashMap.findKey(title)
+        keyFound = returnedHashMap.findKey(title)
         if keyFound:
             timeforHash = time.perf_counter() - startTime
             print(f"Time taken for hashmap search: {1000000 * timeforHash:.10f} microseconds")
@@ -71,7 +75,7 @@ def compareAccuracy(userInput):
     trieAccuracyCount = 0
 
     for i in range(len(userInput)):
-        keyFound = HashMap.findKey(userInput[i])
+        keyFound = returnedHashMap.findKey(userInput[i])
         if keyFound == True:
             hashAccuracyCount += 1
         else:
@@ -106,7 +110,7 @@ if __name__ == "__main__":
         listOfTitles = addTitle(userInput, listOfTitles)
         userInput = input("Title: ")
 
-    returnedTrie, dataLoaded = loadDataset()# outside the function so it only runs loadDataset one time
+    returnedTrie, returnedHashMap, dataLoaded = loadDataset()# outside the function so it only runs loadDataset one time
 
     avgTrieTime, avgHashTime = compareTime(listOfTitles)
     accuracyOfHash, accuracyOfTrie = compareAccuracy(listOfTitles)

@@ -1,22 +1,77 @@
 import string
 
-hashMap = {}
-# create from scratch
-
 class keyValPair:
     def __init__(self, key=-1, val=-1):
         self.key = key
         self.val = val
 
 class HashMap:
-    def insert(key, val):
-        hashMap[key] = val
+    def __init__(self, capacity = 10):
+        self.capacity = capacity
+        self.size = 0
+        # initialize the storage structure(buckets) of the hash table
+        self.buckets = []
+        for _ in range(capacity):
+            self.buckets.append(None)
 
-    def findKey(key):
-        if key in hashMap:
-            return True
-        else:
-            return False
+    def preprocess_title(self, title):
+        if not isinstance(title, str):
+            title = str(title)
+        return title.strip().lower()
+    # define a hash function that maps keys to index positions in the hash table
+    def hash(self, key):
+        key = self.preprocess_title(key)
+        # return an index to find the buckets(
+        return hash(key) % self.capacity
+
+    # going to handle collisions through open addressing, probably just linear probe.
+    def insert(self, key, val):
+        key = self.preprocess_title(key)
+        # Check if the load factor exceeds the threshold
+        if self.size / self.capacity > 0.75:
+            # if does, resize the capacity
+            self.resize()
+        index = self.hash(key)
+
+        for _ in range(self.capacity):
+            if self.buckets[index] is None or self.buckets[index].key == key:
+                self.buckets[index] = keyValPair(key, val)
+                self.size += 1
+                return
+            index = (index + 1) % self.capacity
+
+    def resize(self):
+        # If it is already expanding, return
+        if hasattr(self, '_resizing') and self._resizing:
+            return
+        self._resizing = True
+
+        current_buckets = self.buckets
+        self.capacity *= 2
+        # reset the current element count for all key pairs will reinsert during capacity expansion
+        self.size = 0
+        self.buckets = []
+        for _ in range(self.capacity):
+            self.buckets.append(None)
+        # key pairs reinsert
+        for new_bucket in current_buckets:
+            if new_bucket != None:
+                self.insert(new_bucket.key, new_bucket.val)
+
+    def findKey(self, key):
+        key = self.preprocess_title(key)
+        # calculates the hash value of the key and maps it to the bucket index
+        index = self.hash(key)
+        for _ in range(self.capacity):
+            # if the buckets are empty, the key does not exist
+            if self.buckets[index] is None:
+                return False
+            if self.buckets[index].key == key:
+                return True
+            # move to the next buckets use linearly detects
+            index = (index + 1) % self.capacity
+        return False
+
 
     #
     # load_factor = 0.75
@@ -94,6 +149,7 @@ class Trie:
         # if not find, return false
         return False
 
+    # use for exactly matches search
     def exactlysearch(self, title):
         title = self.preprocess_title(title)
         node = self.root
@@ -113,7 +169,7 @@ class Trie:
         else:
             return False
 
-
+    # use for prefix matches search
     def startswith(self, prefix):
         prefix = self.preprocess_title(prefix)
         node = self.root
