@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     if avgHashTime == 0:
         print("There is no average time for the hash function because it "
-              "could not find any of the inputted titles.\nThe average time for finding the titles in the tree"
+              "could not find any of the inputted titles.\nThe average time for finding the titles in the trie"
               f" is {1000000 * avgTrieTime:.2f} microseconds. ")
     else:
         print(
