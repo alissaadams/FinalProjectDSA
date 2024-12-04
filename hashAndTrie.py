@@ -1,4 +1,13 @@
+import string
+
 hashMap = {}
+# create from scratch
+
+class keyValPair:
+    def __init__(self, key=-1, val=-1):
+        self.key = key
+        self.val = val
+
 class HashMap:
     def insert(key, val):
         hashMap[key] = val
@@ -8,6 +17,30 @@ class HashMap:
             return True
         else:
             return False
+
+    #
+    # load_factor = 0.75
+    # def __init__(self):
+    #     self.capacity = 10
+    #     self.size = 0
+    #     self.hashmap = [KeyValPair() for _ in range(self.capacity)]
+    #
+    # def hash(self, key):
+    #     return key % self.capacity
+    #
+    # # going to handle collisions through open addressing, probably just linear probe.
+    # def insert(self, key: int, value: string):
+    #     hashed_key = self.hash(key)
+    #     bucket = self.hashmap[hashed_key]
+    #     #unfinished
+    #
+    # def get(self,key):
+    #
+
+    #don't need a remove function
+
+
+
 
 class TrieNode:
     def __init__(self):
