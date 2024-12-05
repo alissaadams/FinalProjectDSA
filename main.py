@@ -39,7 +39,7 @@ def compareTime(userInputList):
     totalHashTime = 0
 
     for title in userInputList:
-        isTitle = ''
+        isTitle = '' # initializes title
 
         print(f"Searching for {title}")
 
@@ -48,42 +48,40 @@ def compareTime(userInputList):
         hashKeyFound = returnedHashMap.findKey(title)
         timeforHash = time.perf_counter() - startTime
 
-        # Calculates time for hash only if found in hashmap
+        # Displays time of hash differently depending if title was found
         if hashKeyFound:
-            # timeforHash = time.perf_counter() - startTime
             print(f"Time taken for hashmap search: {1000000 * timeforHash:.2f} microseconds")
         else:
-            # timeforHash = 0
             print(f"'{title}' not found through hashmap. Search time: {1000000 * timeforHash:.2f}")
 
         totalHashTime += timeforHash
 
         # timing for trie
-        # processedTitle = returnedTrie.preprocess_title(title)
         start = time.perf_counter()
         trieKeyFound = returnedTrie.search(title)
         timeforTrie = time.perf_counter() - start
 
-        # Calculates time for trie only if key is found in trie
+        # Displays time of trie different depending on if title was found
         if trieKeyFound:
             # Since the trie searches based on letters not exact matches, ask user if title correct
             print(f"Found: '{trieKeyFound[0]['title']}', is this your title?")
             isTitle = input("Input Y or N: ").lower()
+
+            # Different output based on accuracy of title found
             if (isTitle == 'y'):
                 print(f"Time taken for trie search: {1000000 * timeforTrie:.2f} microseconds\n")
             elif (isTitle == 'n'):
-                # time is not calculated if title incorrect
                 print(f"'{title}' not found through trie. Search time: {1000000 * timeforTrie:.2f}\n")
+
         else:
-            # time is not calculated if title not found
             print(f"'{title}' and no relevant titles found through trie. Search time: {1000000 * timeforTrie:.2f}")
         totalTrieTime += timeforTrie
 
-    # Get averages
+    # Get averages to display
     averageTrieTime = totalTrieTime / len(userInputList)
     averageHashTime = totalHashTime / len(userInputList)
 
-    return averageTrieTime, averageHashTime, isTitle
+    return averageTrieTime, averageHashTime, isTitle # is title is returned to use for accuracy
 
 
 def compareAccuracy(userInputList, isTitleCorrect):
@@ -144,6 +142,7 @@ def main():
             listOfTitles = addTitle(userInput, listOfTitles)
         else:
             print("No input, please try again.")
+
         userInput = input("Title: ")
 
     print("Loading...")
@@ -184,8 +183,5 @@ if __name__ == "__main__":
 
     ## list below is for running and testing
 
-    # ROVSUN Ice Maker Machine Countertop, Make 44lbs Ice in 24 Hours, Compact & Portable Ice Maker with Ice Basket for Home, Office, Kitchen, Bar (Silver)
     # HANSGO Egg Holder for Refrigerator
-    # 154567702 Dishwasher Lower Wash
     # Whirlpool W10918546 Igniter
-    # 1841N030 - Brown Aftermarket Replacement Stove Range Oven Drip Bowl Pan
